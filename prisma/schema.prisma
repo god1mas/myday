@@ -6,3 +6,219 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum RescheduleState {
+  NONE
+  RESCHEDULED
+  DISMISSED
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum DailyReviewAction {
+  TOMORROW
+  RESCHEDULE
+  KEEP
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  username     String        @unique @db.VarChar(100)
+  passwordHash String        @db.VarChar(255)
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+  areas        Area[]
+  projects     Project[]
+  tasks        Task[]
+  timeBlocks   TimeBlock[]
+  events       Event[]
+  dailyReviews DailyReview[]
+}
+
+model Area {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  name      String    @db.VarChar(120)
+  icon      String?   @db.VarChar(100)
+  position  Int       @default(0)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  projects  Project[] @relation("AreaProjects")
+
+  @@unique([id, userId])
+  @@index([userId, position])
+  @@index([deletedAt])
+}
+
+model Project {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  areaId      String?       @db.Uuid
+  name        String        @db.VarChar(160)
+  description String?
+  icon        String?       @db.VarChar(100)
+  status      ProjectStatus @default(ACTIVE)
+  startDate   DateTime?     @db.Date
+  targetDate  DateTime?     @db.Date
+  completedAt DateTime?     @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?     @db.Timestamptz(3)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  area        Area?         @relation("AreaProjects", fields: [areaId, userId], references: [id, userId], onDelete: Restrict)
+  tasks       Task[]        @relation("ProjectTasks")
+
+  @@unique([id, userId])
+  @@index([userId, status])
+  @@index([areaId])
+  @@index([deletedAt])
+}
+
+model Task {
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String            @db.Uuid
+  projectId        String?           @db.Uuid
+  title            String            @db.VarChar(240)
+  description      String?
+  status           TaskStatus        @default(TODO)
+  priority         TaskPriority      @default(MEDIUM)
+  deadlineAt       DateTime?         @db.Timestamptz(3)
+  estimatedMinutes Int?
+  pinnedDate       DateTime?         @db.Date
+  completedAt      DateTime?         @db.Timestamptz(3)
+  createdAt        DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @db.Timestamptz(3)
+  deletedAt        DateTime?         @db.Timestamptz(3)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  project          Project?          @relation("ProjectTasks", fields: [projectId, userId], references: [id, userId], onDelete: Restrict)
+  subtasks         Subtask[]
+  timeBlocks       TimeBlock[]       @relation("TaskTimeBlocks")
+  reviewItems      DailyReviewItem[]
+
+  @@unique([id, userId])
+  @@index([userId, status])
+  @@index([userId, deadlineAt])
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model Subtask {
+  id          String    @id @default(uuid()) @db.Uuid
+  taskId      String    @db.Uuid
+  title       String    @db.VarChar(240)
+  isCompleted Boolean   @default(false)
+  position    Int       @default(0)
+  completedAt DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, position])
+}
+
+model TimeBlock {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid
+  taskId            String?         @db.Uuid
+  title             String          @db.VarChar(240)
+  startAt           DateTime        @db.Timestamptz(3)
+  endAt             DateTime        @db.Timestamptz(3)
+  rescheduleState   RescheduleState @default(NONE)
+  rescheduledFromId String?         @db.Uuid
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+  deletedAt         DateTime?       @db.Timestamptz(3)
+  user              User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  task              Task?           @relation("TaskTimeBlocks", fields: [taskId, userId], references: [id, userId], onDelete: Cascade)
+  rescheduledFrom   TimeBlock?      @relation("TimeBlockRescheduleHistory", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
+  rescheduledBlocks TimeBlock[]     @relation("TimeBlockRescheduleHistory")
+
+  @@index([userId, startAt])
+  @@index([taskId])
+  @@index([rescheduledFromId])
+  @@index([deletedAt])
+}
+
+model Event {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @db.Uuid
+  title            String          @db.VarChar(240)
+  startAt          DateTime        @db.Timestamptz(3)
+  endAt            DateTime        @db.Timestamptz(3)
+  location         String?         @db.VarChar(240)
+  notes            String?
+  recurrenceRuleId String?         @unique @db.Uuid
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @db.Timestamptz(3)
+  deletedAt        DateTime?       @db.Timestamptz(3)
+  user             User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  recurrenceRule   RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id], onDelete: SetNull)
+
+  @@index([userId, startAt])
+  @@index([deletedAt])
+}
+
+model RecurrenceRule {
+  id         String              @id @default(uuid()) @db.Uuid
+  frequency  RecurrenceFrequency
+  interval   Int                 @default(1)
+  daysOfWeek String[]            @default([])
+  until      DateTime?           @db.Date
+  createdAt  DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime            @updatedAt @db.Timestamptz(3)
+  event      Event?
+}
+
+model DailyReview {
+  id                  String            @id @default(uuid()) @db.Uuid
+  userId              String            @db.Uuid
+  reviewDate          DateTime          @db.Date
+  reflection          String?
+  completedTaskCount  Int               @default(0)
+  unfinishedTaskCount Int               @default(0)
+  createdAt           DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime          @updatedAt @db.Timestamptz(3)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items               DailyReviewItem[]
+
+  @@unique([userId, reviewDate])
+}
+
+model DailyReviewItem {
+  id                String            @id @default(uuid()) @db.Uuid
+  dailyReviewId     String            @db.Uuid
+  taskId            String?           @db.Uuid
+  taskTitleSnapshot String            @db.VarChar(240)
+  action            DailyReviewAction
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  dailyReview       DailyReview       @relation(fields: [dailyReviewId], references: [id], onDelete: Cascade)
+  task              Task?             @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([dailyReviewId])
+  @@index([taskId])
+}

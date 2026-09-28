@@ -1,6 +1,6 @@
 # MyDay
 
-MyDay is a personal daily planner and task manager. This repository currently contains the Phase 0 development foundation; business features begin in later phases.
+MyDay is a personal daily planner and task manager. The repository contains the application foundation and the Phase 1 MVP database baseline; application features begin in later phases.
 
 ## Tech stack
 
@@ -33,7 +33,7 @@ Required environment variables:
 
 - `DATABASE_URL`: PostgreSQL connection URL
 - `AUTH_SECRET`: reserved for the Phase 2 authentication implementation
-- `SEED_USERNAME` and `SEED_PASSWORD`: reserved for future local seed data
+- `SEED_USERNAME` and `SEED_PASSWORD`: personal user credentials used by the database seed
 
 Never use the example development credentials in production.
 
@@ -54,17 +54,35 @@ docker compose stop
 
 If Docker is unavailable, create a PostgreSQL database named `myday` and update `DATABASE_URL` in `.env`.
 
-## Prisma
+## Database and Prisma
 
-Phase 0 intentionally contains no business models or migrations. Validate the configuration and generate the client with:
+Apply committed migrations, generate Prisma Client, and seed the personal user plus default Areas:
+
+```bash
+npm run db:deploy
+npm run prisma:generate
+npm run db:seed
+```
+
+The seed is idempotent and hashes `SEED_PASSWORD` with Argon2id. It never stores the plaintext password. Development migration and reset commands are also available:
+
+```bash
+npm run db:migrate
+npm run db:reset
+```
+
+`db:reset` destroys data in the configured database. Use it only with the local MyDay development database.
+
+Validate configuration, connectivity, migration behavior, and database relations with:
 
 ```bash
 npm run prisma:validate
 npm run prisma:generate
 npm run db:check
+npm run db:verify
 ```
 
-Phase 1 will add the database baseline and initial migration.
+The baseline migration includes PostgreSQL CHECK constraints for positive durations and recurrence intervals, non-negative positions/counts, non-empty required text, valid weekdays, and `endAt > startAt`.
 
 ## Development and verification
 
