@@ -1,6 +1,6 @@
 # MyDay
 
-MyDay is a personal daily planner and task manager. The repository contains the application foundation and the Phase 1 MVP database baseline; application features begin in later phases.
+MyDay is a private, single-user daily planner and task manager. The repository currently contains the application foundation, the MVP database baseline, and personal username/password authentication.
 
 ## Tech stack
 
@@ -9,6 +9,8 @@ MyDay is a personal daily planner and task manager. The repository contains the 
 - Tailwind CSS 4
 - PostgreSQL 17
 - Prisma ORM 7
+- Auth.js 5 (Credentials provider)
+- Zod 4
 - npm
 
 ## Prerequisites
@@ -32,10 +34,20 @@ Copy-Item .env.example .env
 Required environment variables:
 
 - `DATABASE_URL`: PostgreSQL connection URL
-- `AUTH_SECRET`: reserved for the Phase 2 authentication implementation
+- `AUTH_SECRET`: a long random secret used to encrypt and sign authentication state
 - `SEED_USERNAME` and `SEED_PASSWORD`: personal user credentials used by the database seed
 
 Never use the example development credentials in production.
+
+Generate an authentication secret before starting the application. For example:
+
+```bash
+npx auth secret
+```
+
+The command writes `AUTH_SECRET` to the local `.env` file. Keep that file and all real credentials out of Git.
+
+Auth.js automatically trusts local development and supported hosting platforms. For a custom production proxy, configure its canonical `AUTH_URL` (or explicitly set `AUTH_TRUST_HOST=true` only when that proxy validates the incoming host header).
 
 ## PostgreSQL
 
@@ -88,10 +100,17 @@ The baseline migration includes PostgreSQL CHECK constraints for positive durati
 
 ```bash
 npm run dev
+npm test
 npm run lint
 npm run typecheck
 npm run build
 ```
+
+After seeding and starting the application, open `http://localhost:3000`. Unauthenticated requests are redirected to `/login`; a valid login lands on the protected `/today` placeholder. Use `SEED_USERNAME` and `SEED_PASSWORD` from the local environment. Authenticated visits to `/login` return to `/today`, and **Keluar** destroys the session and returns to `/login`. There is intentionally no registration flow.
+
+Authentication uses a server-side Auth.js Credentials provider, Argon2id password verification, encrypted JWT session cookies, and a minimal session payload containing only the user's ID and username. Cookies are HTTP-only and SameSite-protected; Auth.js enables secure cookie naming and transport in production HTTPS environments. Authentication errors are deliberately generic so callers cannot distinguish an unknown username from an incorrect password.
+
+The code includes a rate-limit integration boundary in `src/lib/auth/rate-limit.ts`, but no external limiter is configured in this phase. Before exposing MyDay outside a trusted local environment, connect that boundary to a distributed, persistent rate-limit service. An in-memory limiter is intentionally not used because it is unreliable across restarts and multiple application instances.
 
 The production server can be started after a successful build:
 
