@@ -27,6 +27,8 @@ export async function changeTaskStatus(userId: string, id: string, status: TaskS
   await db.task.updateMany({ where: { id, userId, deletedAt: null }, data: { status, completedAt: status === "DONE" ? new Date() : null } }); return true;
 }
 export async function deleteTask(userId: string, id: string) { return (await db.task.updateMany({ where: { id, userId, deletedAt: null }, data: { deletedAt: new Date() } })).count === 1; }
+export async function restoreTask(userId:string,id:string){return db.$transaction(async tx=>{const task=await tx.task.findFirst({where:{id,userId,deletedAt:{not:null}},select:{projectId:true}});if(!task)return false;let projectId=task.projectId;if(projectId&&!await tx.project.findFirst({where:{id:projectId,userId,deletedAt:null},select:{id:true}}))projectId=null;return(await tx.task.updateMany({where:{id,userId,deletedAt:{not:null}},data:{deletedAt:null,projectId}})).count===1})}
+export async function permanentlyDeleteTask(userId:string,id:string){return db.$transaction(async tx=>{const task=await tx.task.findFirst({where:{id,userId,deletedAt:{not:null}},select:{id:true}});if(!task)return false;await tx.task.delete({where:{id:task.id}});return true})}
 export async function createSubtask(userId: string, taskId: string, title: string) {
   return db.$transaction(async (tx) => { const task = await tx.task.findFirst({ where: { id: taskId, userId, deletedAt: null }, select: { id: true } }); if (!task) return null; const last = await tx.subtask.aggregate({ where: { taskId }, _max: { position: true } }); return tx.subtask.create({ data: { taskId, title, position: (last._max.position ?? -1) + 1 } }); });
 }

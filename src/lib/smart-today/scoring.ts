@@ -58,7 +58,7 @@ export function scoreTask<T extends SmartCandidate>(task: T, now: Date, today = 
   return { ...task, score, reasons };
 }
 
-export function rankSmartToday<T extends SmartCandidate>(tasks: T[], now: Date, today = jakartaDate(now), limit = 3) {
+export function rankSmartTasks<T extends SmartCandidate>(tasks: T[], now: Date, today = jakartaDate(now)) {
   return tasks.map((task) => scoreTask(task, now, today)).sort((a, b) =>
     b.score - a.score ||
     Number(jakartaDate(b.pinnedDate ?? new Date(0)) === today) - Number(jakartaDate(a.pinnedDate ?? new Date(0)) === today) ||
@@ -66,5 +66,9 @@ export function rankSmartToday<T extends SmartCandidate>(tasks: T[], now: Date, 
     priorityScore(b.priority) - priorityScore(a.priority) ||
     a.createdAt.getTime() - b.createdAt.getTime() ||
     a.id.localeCompare(b.id)
-  ).slice(0, limit);
+  );
+}
+
+export function rankSmartToday<T extends SmartCandidate>(tasks: T[], now: Date, today = jakartaDate(now), limit = 3) {
+  return rankSmartTasks(tasks, now, today).slice(0, limit);
 }

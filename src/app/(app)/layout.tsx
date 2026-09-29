@@ -23,6 +23,7 @@ export default async function ApplicationLayout({ children }: Readonly<{ childre
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/projects">Projects</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/areas">Areas</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/reviews">Reviews</Link>
+            <Link className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950" href="/trash">Trash</Link>
           </nav>
           <form action={logout}>
             <button
