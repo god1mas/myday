@@ -5,6 +5,7 @@ import { selectNowOrNext } from "@/lib/smart-today/activity";
 import type { CalendarItem } from "@/server/queries/calendar-queries";
 import { getCalendarItemsForRange } from "@/server/queries/calendar-queries";
 import { getSmartTodayTasks } from "@/server/queries/today-queries";
+import { getDailyReviewByDate } from "@/server/queries/daily-review-queries";
 import { setTodayPinAction } from "@/server/actions/today";
 
 const time = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
@@ -24,15 +25,16 @@ export default async function TodayPage() {
   const now = new Date();
   const today = jakartaDate(now);
   const range = jakartaDayRange(today);
-  const [calendarItems, smartTasks] = await Promise.all([
+  const [calendarItems, smartTasks, dailyReview] = await Promise.all([
     getCalendarItemsForRange(user.id, range.start, range.end),
     getSmartTodayTasks(user.id, now, range.start, range.end, today),
+    getDailyReviewByDate(user.id, today),
   ]);
   const schedule = calendarItems.filter((item) => item.type !== "TASK_DEADLINE");
   const focus = selectNowOrNext(schedule, now);
 
   return <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-    <header className="mb-8"><p className="text-sm font-semibold text-emerald-700">TODAY</p><h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">Selamat datang, {user.username}.</h1><p className="mt-2 capitalize text-slate-600">{fullDate.format(now)}</p></header>
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-emerald-700">TODAY</p><h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">Selamat datang, {user.username}.</h1><p className="mt-2 capitalize text-slate-600">{fullDate.format(now)}</p></div><Link href={dailyReview?`/reviews/${dailyReview.id}`:"/reviews/today"} className="min-h-11 rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white">{dailyReview?"View Today’s Review":"Review Today"}</Link></header>
     <section aria-labelledby="focus-heading" className="rounded-2xl bg-slate-950 p-6 text-white">
       <p id="focus-heading" className="text-xs font-bold tracking-[0.2em] text-emerald-300">{focus?.label ?? "NOW / NEXT"}</p>
       {focus ? <div className="mt-3 flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-2xl font-semibold">{focus.item.title}</h2><p className="mt-1 text-slate-300">{focus.item.type === "EVENT" ? "Event" : "Time Block"}{focus.item.context ? ` · ${focus.item.context}` : ""}</p></div><div className="text-right"><p className="font-mono text-lg">{time.format(focus.item.startAt)}–{time.format(focus.item.endAt!)}</p><Link href={focus.item.href} className="mt-2 inline-block text-sm font-semibold text-emerald-300">Buka detail →</Link></div></div> : <p className="mt-3 text-lg text-slate-300">You&apos;re clear for the rest of the day.</p>}
