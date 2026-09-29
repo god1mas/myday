@@ -9,4 +9,22 @@
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea) { font: inherit; }
+:where(button, summary) { touch-action: manipulation; }
+:where(button) { min-height: 2.75rem; }
+:where(button[aria-label]) { min-width: 2.75rem; }
+main { overflow-wrap: anywhere; }
+
+@media (max-width: 639px) {
+  h1.text-4xl { font-size: 1.875rem; line-height: 2.25rem; }
 }

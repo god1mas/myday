@@ -6,7 +6,7 @@ import { getAreas } from "@/server/queries/area-queries";
 export default async function AreasPage() {
   const user = await requireUser();
   const areas = await getAreas(user.id);
-  return <main className="mx-auto max-w-5xl px-6 py-12">
+  return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
     <div className="mb-10"><p className="text-sm font-semibold text-emerald-700">ORGANIZE</p><h1 className="mt-2 text-4xl font-semibold tracking-tight">Areas</h1><p className="mt-2 text-slate-600">Kelompokkan bagian penting dalam hidupmu.</p></div>
     <section className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="mb-5 text-lg font-semibold">Buat area</h2><AreaForm action={createAreaAction} /></section>
     <section className="mt-10"><h2 className="mb-4 text-sm font-semibold tracking-wide text-slate-500">AREA AKTIF</h2>
