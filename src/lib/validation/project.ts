@@ -1,13 +1,11 @@
 import { ProjectStatus } from "@/generated/prisma/enums";
 import { z } from "zod";
+import { optionalDate } from "./date-time";
 
 const optionalText = (max: number) =>
   z.string().trim().max(max).transform((value) => value || null);
 
-const dateField = z.string().trim().refine(
-  (value) => value === "" || /^\d{4}-\d{2}-\d{2}$/.test(value),
-  "Format tanggal tidak valid.",
-);
+const dateField = optionalDate;
 
 export const projectInputSchema = z
   .object({

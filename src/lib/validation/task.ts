@@ -1,12 +1,13 @@
 import { TaskPriority, TaskStatus } from "@/generated/prisma/enums";
 import { z } from "zod";
+import { optionalDate, optionalTime } from "./date-time";
 
 const optionalText = (max: number) => z.string().trim().max(max).transform((v) => v || null);
 export const taskInputSchema = z.object({
   title: z.string().trim().min(1, "Judul tugas wajib diisi.").max(240),
   description: optionalText(5000), projectId: optionalText(36),
-  deadlineDate: z.string().regex(/^$|^\d{4}-\d{2}-\d{2}$/, "Tanggal tidak valid."),
-  deadlineTime: z.string().regex(/^$|^\d{2}:\d{2}$/, "Waktu tidak valid."),
+  deadlineDate: optionalDate,
+  deadlineTime: optionalTime,
   priority: z.enum(TaskPriority).default("MEDIUM"),
   estimatedMinutes: z.string().trim().transform((v) => v ? Number(v) : null).refine((v) => v === null || (Number.isInteger(v) && v > 0), "Durasi harus lebih dari 0 menit."),
 });

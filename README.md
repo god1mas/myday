@@ -110,7 +110,22 @@ After seeding and starting the application, open `http://localhost:3000`. Unauth
 
 Authentication uses a server-side Auth.js Credentials provider, Argon2id password verification, encrypted JWT session cookies, and a minimal session payload containing only the user's ID and username. Cookies are HTTP-only and SameSite-protected; Auth.js enables secure cookie naming and transport in production HTTPS environments. Authentication errors are deliberately generic so callers cannot distinguish an unknown username from an incorrect password.
 
+All application responses set `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-Frame-Options: DENY`. A broader Content Security Policy is intentionally deferred until it can be verified against the final deployment environment rather than shipping an untested policy.
+
 The code includes a rate-limit integration boundary in `src/lib/auth/rate-limit.ts`, but no external limiter is configured in this phase. Before exposing MyDay outside a trusted local environment, connect that boundary to a distributed, persistent rate-limit service. An in-memory limiter is intentionally not used because it is unreliable across restarts and multiple application instances.
+
+## Production deployment gates
+
+Before public deployment:
+
+- provision managed PostgreSQL and configure its backup/recovery policy;
+- set production-only `DATABASE_URL`, a strong `AUTH_SECRET`, `SEED_USERNAME`, and `SEED_PASSWORD` in the deployment secret store;
+- apply migrations and run the idempotent seed without printing secret values;
+- configure the distributed login rate-limit provider boundary;
+- enforce HTTPS and verify Auth.js secure-cookie behavior behind the production proxy;
+- verify the response headers and critical authentication/business flows on the deployed origin.
+
+`npm audit` currently reports transitive high-severity advisories in `deepmerge-ts` and `mysql2` through the Prisma CLI/tooling dependency. The application uses PostgreSQL through `@prisma/adapter-pg`; it does not import either package at runtime. npm's offered automatic remediation downgrades Prisma across a major version boundary, so the risk is documented rather than applying a breaking downgrade. Re-evaluate after a compatible Prisma release updates those transitive dependencies.
 
 The production server can be started after a successful build:
 
