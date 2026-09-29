@@ -14,10 +14,11 @@ export default async function ApplicationLayout({ children }: Readonly<{ childre
             <p className="font-semibold text-slate-950">MyDay</p>
             <p className="text-xs text-slate-500">{user.username}</p>
           </div>
-          <nav aria-label="Navigasi utama" className="flex items-center gap-1 text-sm font-medium text-slate-600">
+          <nav aria-label="Navigasi utama" className="flex flex-wrap items-center justify-center gap-1 text-sm font-medium text-slate-600">
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/today">Today</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/tasks">Tasks</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/planner">Planner</Link>
+            <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/calendar">Calendar</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/events">Events</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/projects">Projects</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/areas">Areas</Link>

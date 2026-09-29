@@ -1,0 +1,1 @@
+export default function CalendarLoading(){return <main className="mx-auto max-w-7xl px-6 py-10"><div className="h-10 w-48 animate-pulse rounded bg-slate-200"/><div className="mt-8 h-96 animate-pulse rounded-xl bg-slate-100"/></main>}

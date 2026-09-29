@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";import{jakartaDayRange}from"@/lib/date/jakarta";
+export async function getTimeBlocksForRange(userId:string,start:Date,end:Date){return db.timeBlock.findMany({where:{userId,deletedAt:null,startAt:{lt:end},endAt:{gt:start},OR:[{taskId:null},{task:{deletedAt:null}}]},include:{task:{select:{id:true,title:true}}},orderBy:[{startAt:"asc"},{id:"asc"}]})}
 const include={task:{select:{id:true,title:true,status:true,deletedAt:true,project:{select:{name:true,area:{select:{name:true}}}}}}};
 export function getTimeBlocksForDay(userId:string,date:string){const{start,end}=jakartaDayRange(date);return db.timeBlock.findMany({where:{userId,deletedAt:null,startAt:{lt:end},endAt:{gt:start},OR:[{taskId:null},{task:{deletedAt:null}}]},orderBy:{startAt:"asc"},include})}
 export function getTimeBlockByIdForUser(userId:string,id:string){return db.timeBlock.findFirst({where:{id,userId,deletedAt:null},include})}
