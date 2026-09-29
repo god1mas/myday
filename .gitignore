@@ -31,3 +31,9 @@ next-env.d.ts
 
 # Prisma generated client
 /src/generated/prisma
+
+# Vercel local project metadata
+.vercel
+
+# Local agent tooling installed by provider integrations
+.agents/

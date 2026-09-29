@@ -36,6 +36,7 @@ Required environment variables:
 - `DATABASE_URL`: PostgreSQL connection URL
 - `AUTH_SECRET`: a long random secret used to encrypt and sign authentication state
 - `SEED_USERNAME` and `SEED_PASSWORD`: personal user credentials used by the database seed
+- `KV_REST_API_URL` and `KV_REST_API_TOKEN`: Upstash Redis REST credentials for distributed login rate limiting
 
 Never use the example development credentials in production.
 
@@ -112,7 +113,7 @@ Authentication uses a server-side Auth.js Credentials provider, Argon2id passwor
 
 All application responses set `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-Frame-Options: DENY`. A broader Content Security Policy is intentionally deferred until it can be verified against the final deployment environment rather than shipping an untested policy.
 
-The code includes a rate-limit integration boundary in `src/lib/auth/rate-limit.ts`, but no external limiter is configured in this phase. Before exposing MyDay outside a trusted local environment, connect that boundary to a distributed, persistent rate-limit service. An in-memory limiter is intentionally not used because it is unreliable across restarts and multiple application instances.
+Production login attempts use an Upstash Redis-backed sliding-window limit of five attempts per identifier in fifteen minutes. Provider failures deny login rather than silently bypassing the limiter. Local development may run without Upstash, but production login fails clearly when the required Redis environment variables are absent. No in-memory limiter is used as a production fallback.
 
 ## Production deployment gates
 
