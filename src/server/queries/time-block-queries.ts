@@ -1,0 +1,6 @@
+import { db } from "@/lib/db/client";import{jakartaDayRange}from"@/lib/date/jakarta";
+const include={task:{select:{id:true,title:true,status:true,deletedAt:true,project:{select:{name:true,area:{select:{name:true}}}}}}};
+export function getTimeBlocksForDay(userId:string,date:string){const{start,end}=jakartaDayRange(date);return db.timeBlock.findMany({where:{userId,deletedAt:null,startAt:{lt:end},endAt:{gt:start},OR:[{taskId:null},{task:{deletedAt:null}}]},orderBy:{startAt:"asc"},include})}
+export function getTimeBlockByIdForUser(userId:string,id:string){return db.timeBlock.findFirst({where:{id,userId,deletedAt:null},include})}
+export async function getEligibleRescheduleBlocks(userId:string,now=new Date()){const blocks=await db.timeBlock.findMany({where:{userId,deletedAt:null,endAt:{lt:now},taskId:{not:null},rescheduleState:"NONE",task:{deletedAt:null,status:{not:"DONE"}}},orderBy:{endAt:"desc"},include});const seen=new Set<string>();return blocks.filter(b=>{if(!b.taskId||seen.has(b.taskId))return false;seen.add(b.taskId);return true})}
+export function getSchedulableTasks(userId:string){return db.task.findMany({where:{userId,deletedAt:null,status:{not:"DONE"}},orderBy:{title:"asc"},select:{id:true,title:true}})}
