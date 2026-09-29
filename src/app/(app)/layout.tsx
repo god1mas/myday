@@ -18,6 +18,7 @@ export default async function ApplicationLayout({ children }: Readonly<{ childre
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/today">Today</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/tasks">Tasks</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/planner">Planner</Link>
+            <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/events">Events</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/projects">Projects</Link>
             <Link className="rounded-lg px-3 py-2 hover:bg-slate-100 hover:text-slate-950" href="/areas">Areas</Link>
           </nav>
